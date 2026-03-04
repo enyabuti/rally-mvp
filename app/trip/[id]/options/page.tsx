@@ -51,13 +51,17 @@ export default function OptionsPage() {
         body: JSON.stringify({ trip_id: tripId }),
       });
 
-      if (!res.ok) throw new Error('Failed to generate options');
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error('Generate options error:', errorData);
+        throw new Error(errorData.details || errorData.error || 'Failed to generate options');
+      }
 
       const data = await res.json();
       setOptions(data.options);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to generate options. Please try again.');
+    } catch (err: any) {
+      console.error('Generate options error:', err);
+      alert(`Failed to generate options: ${err.message || 'Please try again.'}`);
     } finally {
       setGenerating(false);
     }

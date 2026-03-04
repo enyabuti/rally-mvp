@@ -6,6 +6,9 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Increase timeout for AI generation
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   try {
     const { trip_id } = await request.json();
@@ -95,7 +98,21 @@ Important:
     });
 
     const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
-    const options = JSON.parse(responseText);
+
+    // Clean markdown code fences if present
+    let cleanedText = responseText.trim();
+    cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    let options;
+    try {
+      options = JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error('Failed to parse Claude response:', cleanedText);
+      return NextResponse.json({
+        error: 'Failed to parse AI response',
+        details: parseError instanceof Error ? parseError.message : 'Unknown error'
+      }, { status: 500 });
+    }
 
     // Insert options into database
     const optionsToInsert = options.map((opt: any) => ({
@@ -126,8 +143,12 @@ Important:
       .eq('id', trip_id);
 
     return NextResponse.json({ success: true, options: insertedOptions });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Generate options error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({
+      error: 'Failed to generate options',
+      details: err.message || String(err),
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    }, { status: 500 });
   }
 }

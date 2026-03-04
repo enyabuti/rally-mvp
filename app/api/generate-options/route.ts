@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
 // Increase timeout for AI generation
 export const maxDuration = 60;
 
@@ -88,8 +84,14 @@ Important:
 - Be specific with recommendations (actual restaurant names, neighborhoods, activities)
 - Make sure all 3 options are distinctly different`;
 
+    // Initialize client inside the request handler to ensure fresh environment variable access
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+
     // Log API key presence (not the actual key)
     console.log('[AI] API Key present:', !!process.env.ANTHROPIC_API_KEY);
+    console.log('[AI] API Key first 10 chars:', process.env.ANTHROPIC_API_KEY?.substring(0, 10));
     console.log('[AI] Calling Claude API...');
 
     const message = await anthropic.messages.create({

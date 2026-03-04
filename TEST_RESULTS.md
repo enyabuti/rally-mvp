@@ -1,7 +1,7 @@
 # Rally MVP - End-to-End Test Results
 
 **Test Date:** March 4, 2026
-**Status:** ✅ **ALL TESTS PASSED** (7/7)
+**Status:** ✅ **ALL TESTS PASSED** (8/8)
 **Production URL:** https://rally-mvp-xi.vercel.app
 
 ---
@@ -16,7 +16,8 @@
 | 4. Preferences Submission | ✅ PASS | Saves travel preferences to database |
 | 5. AI Option Generation | ✅ PASS | Generates 3 itinerary options using Claude AI |
 | 6. Options Retrieval | ✅ PASS | Fetches generated options from database |
-| 7. Trip Status Update | ✅ PASS | Trip status correctly updates from 'open' to 'voting' |
+| 7. Vote Submission | ✅ PASS | Member votes for option, trip locks automatically at majority |
+| 8. Trip Locked Status | ✅ PASS | Trip status correctly set to 'locked' with winning_option_id |
 
 ---
 
@@ -131,6 +132,9 @@ Failed: 0
 3. ✅ Submit travel preferences (budget flexibility, accommodation, activities, pace)
 4. ✅ Generate AI itinerary options (3 options created)
 5. ✅ Trip status transitions to 'voting' phase
+6. ✅ Vote for preferred option
+7. ✅ Trip automatically locks when majority is reached
+8. ✅ Winning option stored and trip marked as 'locked'
 
 ### ✅ Database Integrity
 1. ✅ Trip record created in `trips` table with status 'open'
@@ -138,6 +142,8 @@ Failed: 0
 3. ✅ Preferences record created in `preferences` table
 4. ✅ 3 option records created in `options` table
 5. ✅ Trip status updated to 'voting' after options generated
+6. ✅ Vote record created in `votes` table
+7. ✅ Trip status updated to 'locked' with winning_option_id when majority reached
 
 ### ✅ API Endpoints
 - ✅ `POST /api/create-trip` - Creates trip + auto-adds organizer
@@ -146,6 +152,8 @@ Failed: 0
 - ✅ `POST /api/preferences` - Saves travel preferences
 - ✅ `POST /api/generate-options` - Generates AI itineraries (60s timeout)
 - ✅ `GET /api/trips/[id]/options` - Fetches generated options
+- ✅ `POST /api/vote` - Submit vote, auto-locks trip at majority
+- ✅ `GET /api/trips/[id]/votes` - Fetches all votes for a trip
 
 ---
 
@@ -171,7 +179,7 @@ The test suite validates the complete flow from trip creation through AI option 
 - **Production URL:** https://rally-mvp-xi.vercel.app
 - **Deployment Status:** ✅ Deployed and tested
 - **Last Deploy:** March 4, 2026
-- **Test Status:** ✅ All 7 end-to-end tests passing in production
+- **Test Status:** ✅ All 8 end-to-end tests passing in production
 
 All functionality has been validated in both local and production environments.
 
@@ -184,7 +192,8 @@ All functionality has been validated in both local and production environments.
 ✓ Preferences Submission
 ✓ AI Option Generation (3 options via Claude Haiku)
 ✓ Options Retrieval
-✓ Trip Status Update (open → voting)
+✓ Vote Submission (auto-locks at majority)
+✓ Trip Locked Status (winning option stored)
 
-Result: 🎉 All 7 tests passed!
+Result: 🎉 All 8 tests passed!
 ```

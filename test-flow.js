@@ -57,6 +57,7 @@ const testPreferences = {
 
 let tripId = null;
 let memberId = null;
+let optionIds = [];
 
 async function test1_CreateTrip() {
   logStep(1, 'Testing Trip Creation');
@@ -291,6 +292,9 @@ async function test6_FetchOptions() {
       throw new Error('No options found in database');
     }
 
+    // Store option IDs for voting test
+    optionIds = options.map(opt => opt.id);
+
     logSuccess(`Retrieved ${options.length} options from database`);
     return true;
   } catch (error) {
@@ -299,8 +303,57 @@ async function test6_FetchOptions() {
   }
 }
 
-async function test7_VerifyTripStatus() {
-  logStep(7, 'Testing Trip Status Update');
+async function test7_SubmitVote() {
+  logStep(7, 'Testing Vote Submission');
+
+  if (!tripId || !memberId || optionIds.length === 0) {
+    logError('Missing trip ID, member ID, or options');
+    return false;
+  }
+
+  try {
+    // Vote for the first option
+    const selectedOptionId = optionIds[0];
+
+    const response = await fetch(`${BASE_URL}/api/vote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        trip_id: tripId,
+        member_id: memberId,
+        option_id: selectedOptionId,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`HTTP ${response.status}: ${JSON.stringify(error)}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error('Vote response did not indicate success');
+    }
+
+    // Since we only have 1 member (organizer), voting should lock the trip
+    if (!data.locked) {
+      logWarning('Trip did not lock after single member vote (majority should be reached)');
+    } else {
+      logSuccess('Trip automatically locked after majority vote');
+      logSuccess(`  - Winning option: ${selectedOptionId}`);
+    }
+
+    logSuccess('Vote submitted successfully');
+    return true;
+  } catch (error) {
+    logError(`Failed to submit vote: ${error.message}`);
+    return false;
+  }
+}
+
+async function test8_VerifyTripStatus() {
+  logStep(8, 'Testing Trip Locked Status');
 
   if (!tripId) {
     logError('No trip ID available');
@@ -320,11 +373,16 @@ async function test7_VerifyTripStatus() {
 
     const trip = await response.json();
 
-    if (trip.status !== 'voting') {
-      throw new Error(`Trip status should be "voting", got "${trip.status}"`);
+    if (trip.status !== 'locked') {
+      throw new Error(`Trip status should be "locked" after voting, got "${trip.status}"`);
     }
 
-    logSuccess(`Trip status correctly updated to "voting"`);
+    if (!trip.winning_option_id) {
+      throw new Error('Trip should have a winning_option_id after being locked');
+    }
+
+    logSuccess(`Trip status correctly set to "locked"`);
+    logSuccess(`  - Winning option ID: ${trip.winning_option_id}`);
     return true;
   } catch (error) {
     logError(`Failed to verify trip status: ${error.message}`);
@@ -346,7 +404,8 @@ async function runAllTests() {
     test4_SubmitPreferences,
     test5_GenerateOptions,
     test6_FetchOptions,
-    test7_VerifyTripStatus,
+    test7_SubmitVote,
+    test8_VerifyTripStatus,
   ];
 
   let passed = 0;

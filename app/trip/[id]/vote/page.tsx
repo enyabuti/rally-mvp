@@ -131,6 +131,28 @@ export default function VotePage() {
     );
   }
 
+  if (options.length === 0 && !loading) {
+    return (
+      <div className="max-w-2xl mx-auto mt-20 text-center">
+        <div className="mb-6">
+          <div className="w-16 h-16 rounded-full bg-rally-border/20 flex items-center justify-center mx-auto mb-4 text-rally-text-muted text-3xl">
+            ?
+          </div>
+          <h2 className="font-serif text-3xl text-rally-black mb-3">No options yet</h2>
+          <p className="text-rally-text-sec mb-8 max-w-md mx-auto">
+            Trip options need to be generated before voting can begin. Make sure everyone has submitted their preferences first.
+          </p>
+        </div>
+        <button
+          onClick={() => router.push(`/trip/${tripId}`)}
+          className="px-8 py-3.5 bg-rally-blue text-white font-bold text-sm rounded-button hover:bg-rally-blue-dark transition-all"
+        >
+          Back to Trip
+        </button>
+      </div>
+    );
+  }
+
   if (trip.status === 'locked' && trip.winning_option_id) {
     const winningOption = options.find(o => o.id === trip.winning_option_id);
 

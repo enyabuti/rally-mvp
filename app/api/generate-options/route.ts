@@ -89,7 +89,7 @@ Important:
 - Make sure all 3 options are distinctly different`;
 
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-3-haiku-20240307',
       max_tokens: 4000,
       messages: [{
         role: 'user',
@@ -137,10 +137,19 @@ Important:
     }
 
     // Update trip status to 'voting'
-    await supabaseAdmin
+    console.log('Updating trip status to voting for trip_id:', trip_id);
+    const { data: updateData, error: updateError } = await supabaseAdmin
       .from('trips')
       .update({ status: 'voting' })
-      .eq('id', trip_id);
+      .eq('id', trip_id)
+      .select();
+
+    if (updateError) {
+      console.error('Failed to update trip status:', updateError);
+      // Don't fail the request, just log the error
+    } else {
+      console.log('Trip status updated successfully:', updateData);
+    }
 
     return NextResponse.json({ success: true, options: insertedOptions });
   } catch (err: any) {

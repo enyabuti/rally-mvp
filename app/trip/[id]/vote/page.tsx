@@ -15,9 +15,7 @@ export default function VotePage() {
   const [myVote, setMyVote] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-
-  // Mock member ID - in real app, this would come from auth
-  const memberId = 'temp-member-id';
+  const [memberId, setMemberId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -26,16 +24,27 @@ export default function VotePage() {
   async function fetchData() {
     try {
       setLoading(true);
-      const [tripRes, optionsRes, votesRes] = await Promise.all([
+      const [tripRes, optionsRes, votesRes, membersRes] = await Promise.all([
         fetch(`/api/trips/${tripId}`),
         fetch(`/api/trips/${tripId}/options`),
-        fetch(`/api/trips/${tripId}/votes`)
+        fetch(`/api/trips/${tripId}/votes`),
+        fetch(`/api/trips/${tripId}/members`)
       ]);
 
       if (!tripRes.ok) throw new Error('Failed to fetch trip');
 
       const tripData = await tripRes.json();
       setTrip(tripData);
+
+      // Get the organizer (first member) as the current user
+      let currentMemberId: string | null = null;
+      if (membersRes.ok) {
+        const membersData = await membersRes.json();
+        if (membersData.length > 0) {
+          currentMemberId = membersData[0].id;
+          setMemberId(currentMemberId);
+        }
+      }
 
       if (optionsRes.ok) {
         const optionsData = await optionsRes.json();
@@ -47,9 +56,11 @@ export default function VotePage() {
         setVotes(votesData);
 
         // Check if current user has voted
-        const userVote = votesData.find((v: Vote) => v.member_id === memberId);
-        if (userVote) {
-          setMyVote(userVote.option_id);
+        if (currentMemberId) {
+          const userVote = votesData.find((v: Vote) => v.member_id === currentMemberId);
+          if (userVote) {
+            setMyVote(userVote.option_id);
+          }
         }
       }
     } catch (err) {
@@ -60,7 +71,7 @@ export default function VotePage() {
   }
 
   async function handleVote(optionId: string) {
-    if (myVote) return; // Already voted
+    if (myVote || !memberId) return; // Already voted or no member ID
 
     setSubmitting(true);
     try {
@@ -223,16 +234,18 @@ export default function VotePage() {
 
                 <button
                   onClick={() => handleVote(opt.id)}
-                  disabled={!!myVote || submitting}
+                  disabled={!!myVote || submitting || !memberId}
                   className={`w-full py-3 rounded-button text-sm font-bold transition-all ${
                     isSelected
                       ? 'bg-rally-green text-white'
                       : myVote
                       ? 'bg-rally-border/20 text-rally-text-muted cursor-not-allowed'
+                      : !memberId
+                      ? 'bg-rally-border/20 text-rally-text-muted cursor-not-allowed'
                       : 'bg-rally-blue text-white hover:bg-rally-blue-dark hover:-translate-y-0.5 hover:shadow-lg'
                   }`}
                 >
-                  {isSelected ? '✓ You voted for this' : myVote ? 'You voted for another option' : submitting ? 'Voting...' : 'Vote for this'}
+                  {isSelected ? '✓ You voted for this' : myVote ? 'You voted for another option' : !memberId ? 'Loading...' : submitting ? 'Voting...' : 'Vote for this'}
                 </button>
               </div>
             </div>

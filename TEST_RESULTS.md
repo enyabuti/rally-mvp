@@ -2,7 +2,7 @@
 
 **Test Date:** March 4, 2026
 **Status:** ✅ **ALL TESTS PASSED** (7/7)
-**Production URL:** https://rally-hfwudythl-enyabutis-projects.vercel.app
+**Production URL:** https://rally-mvp-xi.vercel.app
 
 ---
 
@@ -46,6 +46,18 @@
 **Problem:** Supabase update errors were not logged
 **Solution:** Added error logging and verification with `.select()`
 **File:** `app/api/generate-options/route.ts:140-149`
+
+### 6. ❌ Production Connection Error with Anthropic SDK
+**Problem:** Anthropic SDK throwing "Connection error" in Vercel serverless environment
+**Error:** `Failed to generate options: Connection error. (errorType: "aU")`
+**Root Cause:** The `@anthropic-ai/sdk` package has compatibility issues in serverless environments
+**Solution:** Replaced SDK with direct `fetch()` call to Anthropic API
+**File:** `app/api/generate-options/route.ts:91-114`
+**Details:**
+- Removed `import Anthropic from '@anthropic-ai/sdk'`
+- Implemented direct HTTP call using native fetch
+- Added proper error handling for API responses
+- Environment variable confirmed present with correct value in production
 
 ---
 
@@ -156,8 +168,23 @@ The test suite validates the complete flow from trip creation through AI option 
 ## Production Deployment
 
 - **GitHub Repository:** https://github.com/enyabuti/rally-mvp
-- **Production URL:** https://rally-hfwudythl-enyabutis-projects.vercel.app
+- **Production URL:** https://rally-mvp-xi.vercel.app
 - **Deployment Status:** ✅ Deployed and tested
 - **Last Deploy:** March 4, 2026
+- **Test Status:** ✅ All 7 end-to-end tests passing in production
 
 All functionality has been validated in both local and production environments.
+
+### Production Test Results
+
+```
+✓ Trip Creation
+✓ Trip Retrieval
+✓ Members Retrieval (Organizer auto-added)
+✓ Preferences Submission
+✓ AI Option Generation (3 options via Claude Haiku)
+✓ Options Retrieval
+✓ Trip Status Update (open → voting)
+
+Result: 🎉 All 7 tests passed!
+```

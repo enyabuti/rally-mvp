@@ -88,6 +88,10 @@ Important:
 - Be specific with recommendations (actual restaurant names, neighborhoods, activities)
 - Make sure all 3 options are distinctly different`;
 
+    // Log API key presence (not the actual key)
+    console.log('[AI] API Key present:', !!process.env.ANTHROPIC_API_KEY);
+    console.log('[AI] Calling Claude API...');
+
     const message = await anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
       max_tokens: 4000,
@@ -96,6 +100,8 @@ Important:
         content: prompt,
       }],
     });
+
+    console.log('[AI] Claude API call successful');
 
     const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
 
@@ -153,10 +159,16 @@ Important:
 
     return NextResponse.json({ success: true, options: insertedOptions });
   } catch (err: any) {
-    console.error('Generate options error:', err);
+    console.error('[AI] Generate options error:', err);
+    console.error('[AI] Error type:', err.constructor.name);
+    console.error('[AI] Error status:', err.status);
+    console.error('[AI] Error message:', err.message);
+
     return NextResponse.json({
       error: 'Failed to generate options',
       details: err.message || String(err),
+      errorType: err.constructor.name,
+      errorStatus: err.status,
       stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     }, { status: 500 });
   }

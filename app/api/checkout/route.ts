@@ -24,6 +24,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
     }
 
+    // Get base URL for redirects
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || 'https://rally-mvp-xi.vercel.app';
+
+    console.log('Creating checkout session with base URL:', baseUrl);
+
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -41,8 +46,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin')}/trip/${trip_id}?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin')}/trip/${trip_id}?canceled=true`,
+      success_url: `${baseUrl}/trip/${trip_id}?success=true`,
+      cancel_url: `${baseUrl}/trip/${trip_id}?canceled=true`,
       metadata: {
         trip_id,
         member_name,
@@ -50,6 +55,12 @@ export async function POST(request: NextRequest) {
       },
       customer_email: member_email,
     });
+
+    console.log('Checkout session created:', session.id, 'URL:', session.url);
+
+    if (!session.url) {
+      throw new Error('Stripe did not return a checkout URL');
+    }
 
     return NextResponse.json({ url: session.url });
   } catch (err: any) {

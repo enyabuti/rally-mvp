@@ -142,15 +142,23 @@ Important:
       vote_count: 0,
     }));
 
+    console.log('[DB] Inserting options:', optionsToInsert.length, 'options');
     const { data: insertedOptions, error: insertError } = await supabaseAdmin
       .from('options')
       .insert(optionsToInsert)
       .select('*');
 
     if (insertError) {
-      console.error('Insert options error:', insertError);
-      return NextResponse.json({ error: 'Failed to save options' }, { status: 500 });
+      console.error('[DB] Insert options error:', insertError);
+      console.error('[DB] Insert error details:', JSON.stringify(insertError, null, 2));
+      return NextResponse.json({
+        error: 'Failed to save options',
+        details: insertError.message,
+        code: insertError.code
+      }, { status: 500 });
     }
+
+    console.log('[DB] Successfully inserted', insertedOptions?.length, 'options');
 
     // Update trip status to 'voting'
     console.log('Updating trip status to voting for trip_id:', trip_id);

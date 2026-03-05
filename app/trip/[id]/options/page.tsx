@@ -58,7 +58,10 @@ export default function OptionsPage() {
       }
 
       const data = await res.json();
-      setOptions(data.options);
+
+      // Fetch fresh data from the database instead of using the response
+      // This ensures we get the actual saved data with IDs
+      await fetchData();
     } catch (err: any) {
       console.error('Generate options error:', err);
       alert(`Failed to generate options: ${err.message || 'Please try again.'}`);

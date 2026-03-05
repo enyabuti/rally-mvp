@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Trip, Member } from '@/lib/types';
+import PhaseProgress from '@/app/components/PhaseProgress';
 
 export default function TripDetailPage() {
   const params = useParams();
@@ -16,6 +17,13 @@ export default function TripDetailPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Email identification
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [emailInput, setEmailInput] = useState('');
+  const [identifyingEmail, setIdentifyingEmail] = useState(false);
+
+  // Join form state
   const [memberName, setMemberName] = useState('');
   const [memberEmail, setMemberEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -24,7 +32,45 @@ export default function TripDetailPage() {
 
   useEffect(() => {
     fetchTripData();
+
+    // Check localStorage for saved email
+    const savedEmail = localStorage.getItem('rally_user_email');
+    if (savedEmail) {
+      setUserEmail(savedEmail);
+    }
   }, [tripId]);
+
+  // Save trip to localStorage
+  useEffect(() => {
+    if (trip && userEmail) {
+      const role = userEmail === trip.organizer_email ? 'organizer' : 'member';
+      saveRecentTrip(trip.id, trip.name, trip.destination, role);
+    }
+  }, [trip, userEmail]);
+
+  function saveRecentTrip(id: string, name: string, destination: string, role: 'organizer' | 'member') {
+    const stored = localStorage.getItem('rally_recent_trips');
+    let trips: any[] = [];
+
+    if (stored) {
+      try {
+        trips = JSON.parse(stored);
+      } catch (err) {
+        trips = [];
+      }
+    }
+
+    // Remove existing entry for this trip
+    trips = trips.filter(t => t.id !== id);
+
+    // Add to front
+    trips.unshift({ id, name, destination, role });
+
+    // Keep only last 5
+    trips = trips.slice(0, 5);
+
+    localStorage.setItem('rally_recent_trips', JSON.stringify(trips));
+  }
 
   async function fetchTripData() {
     try {
@@ -54,6 +100,15 @@ export default function TripDetailPage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  function handleEmailIdentification(e: React.FormEvent) {
+    e.preventDefault();
+    if (emailInput.trim()) {
+      setUserEmail(emailInput.trim());
+      localStorage.setItem('rally_user_email', emailInput.trim());
+      setIdentifyingEmail(false);
     }
   }
 
@@ -98,11 +153,40 @@ export default function TripDetailPage() {
       }
 
       const { url } = await res.json();
+
+      // Save email to localStorage before redirecting
+      localStorage.setItem('rally_user_email', memberEmail);
+
       window.location.href = url;
     } catch (err: any) {
       console.error('Checkout error:', err);
       alert(`Failed to start checkout: ${err.message}`);
       setSubmitting(false);
+    }
+  }
+
+  async function handleStatusUpdate(newStatus: string) {
+    try {
+      const res = await fetch(`/api/trips/${tripId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to update trip status');
+      }
+
+      // Refresh trip data
+      await fetchTripData();
+
+      // If moving to voting status, redirect to options page to trigger generation
+      if (newStatus === 'voting') {
+        router.push(`/trip/${tripId}/options`);
+      }
+    } catch (err: any) {
+      alert(`Failed to update trip status: ${err.message}`);
     }
   }
 
@@ -133,7 +217,143 @@ export default function TripDetailPage() {
 
   const committed = members.filter(m => m.status === 'committed').length;
   const prefsSubmitted = preferencesCount;
+  const isOrganizer = userEmail === trip.organizer_email;
+  const isMember = members.some(m => m.email === userEmail);
+  const userMember = members.find(m => m.email === userEmail);
 
+  // Email Identification View
+  if (!userEmail || identifyingEmail) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white border border-rally-border rounded-card p-8 text-center">
+          <h2 className="font-serif text-2xl text-rally-black mb-3">Identify Yourself</h2>
+          <p className="text-rally-text-sec mb-6">
+            Enter your email to access this trip
+          </p>
+          <form onSubmit={handleEmailIdentification} className="max-w-md mx-auto">
+            <input
+              type="email"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full px-4 py-3 border border-rally-border rounded-input text-rally-text mb-4 focus:outline-none focus:border-rally-blue"
+              required
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="w-full py-3 bg-rally-blue text-white font-bold rounded-button hover:bg-rally-blue-dark transition-all"
+            >
+              Continue
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Join View (for non-members)
+  if (!isMember && trip.status === 'open') {
+    return (
+      <div className="max-w-3xl mx-auto">
+        {/* Trip Invitation Card */}
+        <div className="bg-rally-offwhite border border-rally-border rounded-card p-8 mb-5 text-center">
+          <h1 className="font-serif text-4xl text-rally-black mb-3">
+            You're invited to {trip.name}
+          </h1>
+          <p className="text-lg text-rally-text-sec mb-6">{trip.destination}</p>
+
+          <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mb-8">
+            {[
+              { label: 'Dates', value: `${formatDate(trip.start_date)} — ${formatDate(trip.end_date)}` },
+              { label: 'Budget', value: `${formatCurrency(trip.budget_per_person)}/person` },
+              { label: 'Deposit', value: formatCurrency(trip.deposit_amount) },
+            ].map((item, i) => (
+              <div key={i}>
+                <p className="text-xs text-rally-text-muted uppercase tracking-wider font-semibold mb-1">
+                  {item.label}
+                </p>
+                <p className="text-sm text-rally-text font-semibold">{item.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-center gap-2 text-rally-text-sec mb-2">
+            <span className="text-2xl">{committed}</span>
+            <span className="text-sm">crew member{committed !== 1 ? 's' : ''} committed</span>
+          </div>
+        </div>
+
+        {/* Payment Success Message */}
+        {paymentSuccess ? (
+          <div className="bg-rally-green-light border border-rally-green-border rounded-card p-8 mb-5 text-center">
+            <div className="text-5xl mb-4">🎉</div>
+            <h3 className="font-serif text-3xl text-rally-black mb-3">You're committed!</h3>
+            <p className="text-rally-text-sec mb-6">
+              Your deposit has been received. You're now part of the crew for {trip.name}!
+            </p>
+            <button
+              onClick={() => router.push(`/trip/${tripId}/preferences`)}
+              className="px-8 py-4 bg-rally-blue text-white font-bold rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              Submit Your Travel Preferences
+            </button>
+          </div>
+        ) : (
+          /* Join Trip Form */
+          <div className="bg-white border border-rally-border rounded-card p-8">
+            <h2 className="font-serif text-2xl text-rally-black mb-3">Join This Trip</h2>
+            <p className="text-rally-text-sec mb-6">
+              Commit to the trip by paying your {formatCurrency(trip.deposit_amount)} deposit. You'll help shape the itinerary!
+            </p>
+
+            <form onSubmit={handleJoinTrip} className="space-y-4">
+              <div>
+                <label htmlFor="name" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wide mb-2">
+                  Your Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  value={memberName}
+                  onChange={(e) => setMemberName(e.target.value)}
+                  placeholder="Enter your name"
+                  className="w-full px-4 py-3 border border-rally-border rounded-input text-rally-text placeholder:text-rally-text-muted focus:outline-none focus:border-rally-blue"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wide mb-2">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={memberEmail}
+                  onChange={(e) => setMemberEmail(e.target.value)}
+                  defaultValue={userEmail}
+                  placeholder="you@example.com"
+                  className="w-full px-4 py-3 border border-rally-border rounded-input text-rally-text placeholder:text-rally-text-muted focus:outline-none focus:border-rally-blue"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-4 bg-rally-blue text-white font-bold rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+              >
+                {submitting ? 'Processing...' : `Commit & Pay ${formatCurrency(trip.deposit_amount)}`}
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Member/Organizer View
   return (
     <div className="max-w-3xl mx-auto">
       {/* Trip Header Card */}
@@ -145,14 +365,21 @@ export default function TripDetailPage() {
             </h1>
             <p className="text-sm text-rally-text-sec">{trip.destination}</p>
           </div>
-          <span className={`
-            text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wide
-            ${trip.status === 'locked' ? 'bg-rally-green-light text-rally-green' :
-              trip.status === 'voting' ? 'bg-rally-blue-light text-rally-blue' :
-              'bg-amber-50 text-amber-600'}
-          `}>
-            {trip.status}
-          </span>
+          <div className="flex items-center gap-2">
+            {isOrganizer && (
+              <span className="text-[10px] font-bold px-3 py-1.5 bg-rally-blue-light text-rally-blue rounded-full uppercase tracking-wide">
+                Organizer
+              </span>
+            )}
+            <span className={`
+              text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wide
+              ${trip.status === 'locked' ? 'bg-rally-green-light text-rally-green' :
+                trip.status === 'voting' ? 'bg-rally-blue-light text-rally-blue' :
+                'bg-amber-50 text-amber-600'}
+            `}>
+              {trip.status}
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-3 mb-4">
@@ -170,80 +397,24 @@ export default function TripDetailPage() {
           ))}
         </div>
 
-        {/* Share Link */}
-        <div className="flex gap-2">
-          <div className="flex-1 px-3.5 py-2.5 bg-white border border-rally-border rounded-input text-sm text-rally-text-muted overflow-hidden text-ellipsis whitespace-nowrap">
-            {typeof window !== 'undefined' && `${window.location.origin}/trip/${tripId}`}
+        {/* Share Link - Organizer Only */}
+        {isOrganizer && (
+          <div className="flex gap-2">
+            <div className="flex-1 px-3.5 py-2.5 bg-white border border-rally-border rounded-input text-sm text-rally-text-muted overflow-hidden text-ellipsis whitespace-nowrap">
+              {typeof window !== 'undefined' && `${window.location.origin}/trip/${tripId}`}
+            </div>
+            <button
+              onClick={copyShareLink}
+              className={`px-5 py-2.5 ${copied ? 'bg-rally-green' : 'bg-rally-black'} text-white rounded-input text-sm font-bold transition-all whitespace-nowrap hover:-translate-y-0.5`}
+            >
+              {copied ? '✓ Copied' : 'Copy Link'}
+            </button>
           </div>
-          <button
-            onClick={copyShareLink}
-            className={`px-5 py-2.5 ${copied ? 'bg-rally-green' : 'bg-rally-black'} text-white rounded-input text-sm font-bold transition-all whitespace-nowrap hover:-translate-y-0.5`}
-          >
-            {copied ? '✓ Copied' : 'Copy Link'}
-          </button>
-        </div>
+        )}
       </div>
 
-      {/* Join Trip Form */}
-      {trip.status === 'open' && !paymentSuccess && (
-        <div className="bg-white border border-rally-border rounded-card p-6 mb-5">
-          <h2 className="font-serif text-xl text-rally-black mb-2">Join This Trip</h2>
-          <p className="text-sm text-rally-text-sec mb-4">
-            Commit to the trip by paying your ${formatCurrency(trip.deposit_amount)} deposit. You'll help shape the itinerary!
-          </p>
-
-          <form onSubmit={handleJoinTrip} className="space-y-3">
-            <div>
-              <label htmlFor="name" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wide mb-1.5">
-                Your Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                value={memberName}
-                onChange={(e) => setMemberName(e.target.value)}
-                placeholder="Enter your name"
-                className="w-full px-3.5 py-2.5 border border-rally-border rounded-input text-sm text-rally-text placeholder:text-rally-text-muted focus:outline-none focus:border-rally-blue"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wide mb-1.5">
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={memberEmail}
-                onChange={(e) => setMemberEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full px-3.5 py-2.5 border border-rally-border rounded-input text-sm text-rally-text placeholder:text-rally-text-muted focus:outline-none focus:border-rally-blue"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-3.5 bg-rally-blue text-white font-bold text-sm rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-            >
-              {submitting ? 'Processing...' : `Commit & Pay ${formatCurrency(trip.deposit_amount)}`}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Payment Success Message */}
-      {paymentSuccess && (
-        <div className="bg-rally-green-light border border-rally-green-border rounded-card p-6 mb-5 text-center">
-          <div className="text-4xl mb-3">🎉</div>
-          <h3 className="font-serif text-2xl text-rally-black mb-2">You're committed!</h3>
-          <p className="text-rally-text-sec">
-            Your deposit has been received. You're now part of the crew for {trip.name}!
-          </p>
-        </div>
-      )}
+      {/* Phase Progress */}
+      <PhaseProgress currentStatus={trip.status as any} />
 
       {/* Crew Status */}
       <div className="bg-white border border-rally-border rounded-card p-6 mb-5">
@@ -273,6 +444,11 @@ export default function TripDetailPage() {
                 <div>
                   <p className="text-sm font-semibold text-rally-text">
                     {member.name}
+                    {member.email === userEmail && (
+                      <span className="ml-2 text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">
+                        You
+                      </span>
+                    )}
                     {member.email === trip.organizer_email && (
                       <span className="ml-2 text-[10px] bg-rally-blue-light text-rally-blue px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">
                         Organizer
@@ -292,9 +468,40 @@ export default function TripDetailPage() {
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* Organizer Phase Actions */}
+      {isOrganizer && (
+        <div className="bg-white border border-rally-border rounded-card p-6 mb-5">
+          <h2 className="font-serif text-xl text-rally-black mb-4">Organizer Actions</h2>
+
+          {trip.status === 'open' && committed > 0 && (
+            <button
+              onClick={() => handleStatusUpdate('preferences')}
+              className="w-full py-3 bg-rally-blue text-white font-bold text-sm rounded-button hover:bg-rally-blue-dark transition-all mb-3"
+            >
+              Close Signups & Start Preferences Phase
+            </button>
+          )}
+
+          {trip.status === 'preferences' && prefsSubmitted === committed && committed > 0 && (
+            <button
+              onClick={() => handleStatusUpdate('voting')}
+              className="w-full py-3 bg-rally-blue text-white font-bold text-sm rounded-button hover:bg-rally-blue-dark transition-all mb-3"
+            >
+              Generate AI Trip Options
+            </button>
+          )}
+
+          {trip.status === 'preferences' && prefsSubmitted < committed && (
+            <div className="text-center py-2 text-sm text-rally-text-muted">
+              Waiting for all preferences ({prefsSubmitted}/{committed} submitted)
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Member Action Buttons */}
       <div className="space-y-3">
-        {trip.status === 'open' && committed > 0 && (
+        {trip.status === 'open' && isMember && (
           <button
             onClick={() => router.push(`/trip/${tripId}/preferences`)}
             className="w-full py-4 bg-white border-2 border-rally-blue text-rally-blue font-bold text-sm rounded-button hover:bg-rally-blue-light transition-all"
@@ -303,12 +510,12 @@ export default function TripDetailPage() {
           </button>
         )}
 
-        {trip.status === 'preferences' && (
+        {trip.status === 'preferences' && isMember && (
           <button
-            onClick={() => router.push(`/trip/${tripId}/options`)}
+            onClick={() => router.push(`/trip/${tripId}/preferences`)}
             className="w-full py-4 bg-rally-blue text-white font-bold text-sm rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg"
           >
-            View AI-Generated Trip Options
+            {prefsSubmitted > 0 ? 'Update Your Preferences' : 'Submit Your Travel Preferences'}
           </button>
         )}
 
@@ -354,6 +561,16 @@ export default function TripDetailPage() {
           )}
         </div>
       )}
+
+      {/* Change Email Link */}
+      <div className="mt-4 text-center">
+        <button
+          onClick={() => setIdentifyingEmail(true)}
+          className="text-xs text-rally-text-muted hover:text-rally-blue underline"
+        >
+          Not {userEmail}? Change email
+        </button>
+      </div>
     </div>
   );
 }

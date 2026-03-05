@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get base URL for redirects
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || 'https://rally-mvp-xi.vercel.app';
+    const baseUrl = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://rally-mvp-xi.vercel.app';
 
     console.log('Creating checkout session with base URL:', baseUrl);
 

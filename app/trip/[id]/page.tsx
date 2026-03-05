@@ -92,14 +92,16 @@ export default function TripDetailPage() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to create checkout session');
+        const errorData = await res.json();
+        console.error('Checkout error:', errorData);
+        throw new Error(errorData.details || errorData.error || 'Failed to create checkout session');
       }
 
       const { url } = await res.json();
       window.location.href = url;
-    } catch (err) {
-      console.error(err);
-      alert('Failed to start checkout. Please try again.');
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      alert(`Failed to start checkout: ${err.message}`);
       setSubmitting(false);
     }
   }

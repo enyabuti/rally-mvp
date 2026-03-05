@@ -11,6 +11,7 @@ export default function TripDetailPage() {
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  const [preferencesCount, setPreferencesCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,9 +23,10 @@ export default function TripDetailPage() {
   async function fetchTripData() {
     try {
       setLoading(true);
-      const [tripRes, membersRes] = await Promise.all([
+      const [tripRes, membersRes, prefsCountRes] = await Promise.all([
         fetch(`/api/trips/${tripId}`),
-        fetch(`/api/trips/${tripId}/members`)
+        fetch(`/api/trips/${tripId}/members`),
+        fetch(`/api/trips/${tripId}/preferences-count`)
       ]);
 
       if (!tripRes.ok || !membersRes.ok) {
@@ -36,6 +38,11 @@ export default function TripDetailPage() {
 
       setTrip(tripData);
       setMembers(membersData);
+
+      if (prefsCountRes.ok) {
+        const prefsCountData = await prefsCountRes.json();
+        setPreferencesCount(prefsCountData.count || 0);
+      }
     } catch (err) {
       setError('Failed to load trip. Please check the URL and try again.');
       console.error(err);
@@ -85,7 +92,7 @@ export default function TripDetailPage() {
   }
 
   const committed = members.filter(m => m.status === 'committed').length;
-  const prefsSubmitted = members.filter(m => m.status === 'committed').length; // TODO: Add preferences check
+  const prefsSubmitted = preferencesCount;
 
   return (
     <div className="max-w-3xl mx-auto">

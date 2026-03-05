@@ -12,6 +12,7 @@ export async function GET(
   try {
     const { id } = params;
 
+    console.log('[OPTIONS] Fetching options for trip:', id);
     const { data, error } = await supabaseAdmin
       .from('options')
       .select('*')
@@ -19,10 +20,11 @@ export async function GET(
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('Get options error:', error);
+      console.error('[OPTIONS] Get options error:', error);
       return NextResponse.json({ error: 'Failed to fetch options' }, { status: 500 });
     }
 
+    console.log('[OPTIONS] Found', data?.length || 0, 'options');
     return NextResponse.json(data || []);
   } catch (err) {
     console.error('Get options error:', err);

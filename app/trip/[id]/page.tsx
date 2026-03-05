@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Trip, Member } from '@/lib/types';
 
 export default function TripDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const tripId = params.id as string;
 
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -15,6 +16,11 @@ export default function TripDetailPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [memberName, setMemberName] = useState('');
+  const [memberEmail, setMemberEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const paymentSuccess = searchParams.get('success') === 'true';
 
   useEffect(() => {
     fetchTripData();
@@ -64,6 +70,38 @@ export default function TripDetailPage() {
 
   function formatCurrency(cents: number) {
     return `$${(cents / 100).toFixed(0)}`;
+  }
+
+  async function handleJoinTrip(e: React.FormEvent) {
+    e.preventDefault();
+    if (!memberName.trim() || !memberEmail.trim()) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trip_id: tripId,
+          member_name: memberName,
+          member_email: memberEmail,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const { url } = await res.json();
+      window.location.href = url;
+    } catch (err) {
+      console.error(err);
+      alert('Failed to start checkout. Please try again.');
+      setSubmitting(false);
+    }
   }
 
   if (loading) {
@@ -143,6 +181,67 @@ export default function TripDetailPage() {
           </button>
         </div>
       </div>
+
+      {/* Join Trip Form */}
+      {trip.status === 'open' && !paymentSuccess && (
+        <div className="bg-white border border-rally-border rounded-card p-6 mb-5">
+          <h2 className="font-serif text-xl text-rally-black mb-2">Join This Trip</h2>
+          <p className="text-sm text-rally-text-sec mb-4">
+            Commit to the trip by paying your ${formatCurrency(trip.deposit_amount)} deposit. You'll help shape the itinerary!
+          </p>
+
+          <form onSubmit={handleJoinTrip} className="space-y-3">
+            <div>
+              <label htmlFor="name" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wide mb-1.5">
+                Your Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                value={memberName}
+                onChange={(e) => setMemberName(e.target.value)}
+                placeholder="Enter your name"
+                className="w-full px-3.5 py-2.5 border border-rally-border rounded-input text-sm text-rally-text placeholder:text-rally-text-muted focus:outline-none focus:border-rally-blue"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wide mb-1.5">
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={memberEmail}
+                onChange={(e) => setMemberEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full px-3.5 py-2.5 border border-rally-border rounded-input text-sm text-rally-text placeholder:text-rally-text-muted focus:outline-none focus:border-rally-blue"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full py-3.5 bg-rally-blue text-white font-bold text-sm rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            >
+              {submitting ? 'Processing...' : `Commit & Pay ${formatCurrency(trip.deposit_amount)}`}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Payment Success Message */}
+      {paymentSuccess && (
+        <div className="bg-rally-green-light border border-rally-green-border rounded-card p-6 mb-5 text-center">
+          <div className="text-4xl mb-3">🎉</div>
+          <h3 className="font-serif text-2xl text-rally-black mb-2">You're committed!</h3>
+          <p className="text-rally-text-sec">
+            Your deposit has been received. You're now part of the crew for {trip.name}!
+          </p>
+        </div>
+      )}
 
       {/* Crew Status */}
       <div className="bg-white border border-rally-border rounded-card p-6 mb-5">

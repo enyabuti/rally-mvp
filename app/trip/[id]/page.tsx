@@ -120,6 +120,18 @@ export default function TripDetailPage() {
     }
   }
 
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        setCopied(true);
+        if (copiedTimeout.current) clearTimeout(copiedTimeout.current);
+        copiedTimeout.current = setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy:', err);
+      });
+  }
+
   async function handleShare() {
     const shareUrl = `${window.location.origin}/trip/${tripId}`;
 
@@ -140,15 +152,8 @@ export default function TripDetailPage() {
       }
     }
 
-    // Fallback to clipboard
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      if (copiedTimeout.current) clearTimeout(copiedTimeout.current);
-      copiedTimeout.current = setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
+    // Fallback to clipboard - copy ONLY the clean URL
+    copyToClipboard(shareUrl);
   }
 
   // Cleanup timeout on unmount

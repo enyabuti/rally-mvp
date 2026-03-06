@@ -420,9 +420,10 @@ export default function TripDetailPage() {
           <p className="text-[15px] text-rally-text-sec">
             {formatDate(trip.start_date)} — {formatDate(trip.end_date)}
           </p>
+        </div>
 
-          {/* Trip Details Card with Crew */}
-          <div className="bg-rally-offwhite border border-rally-border rounded-2xl p-5 mb-4">
+        {/* Trip Details Card with Crew */}
+        <div className="bg-rally-offwhite border border-rally-border rounded-2xl p-5 mb-4">
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <p className="text-[11px] text-rally-text-muted uppercase tracking-wider font-semibold mb-0.5">
@@ -468,41 +469,42 @@ export default function TripDetailPage() {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Deadline Notice */}
-          {trip.commitment_deadline && (
-            <div className="bg-amber-50 border border-amber-500/15 rounded-xl px-4 py-3 mb-5">
-              <p className="text-[13px] text-amber-700 font-semibold">
-                Commit by {formatDate(trip.commitment_deadline)} to join this trip
-              </p>
-            </div>
-          )}
         </div>
+
+        {/* Deadline Notice */}
+        {trip.commitment_deadline && (
+          <div className="bg-amber-50 border border-amber-500/15 rounded-xl px-4 py-3 mb-5">
+            <p className="text-[13px] text-amber-700 font-semibold">
+              Commit by {formatDate(trip.commitment_deadline)} to join this trip
+            </p>
+          </div>
+        )}
 
         {/* Two-Button Action Flow */}
         {!showJoinForm && !showInterestedForm ? (
-          <div className="space-y-2.5 mb-5">
-            <button
-              onClick={() => setShowJoinForm(true)}
-              className="w-full py-4 bg-rally-blue text-white font-bold text-base rounded-[14px] hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 shadow-[0_4px_16px_rgba(37,99,235,0.25)]"
-            >
-              I'm in — Commit & Pay ${formatCurrency(trip.deposit_amount)}
-            </button>
-            <button
-              onClick={() => setShowInterestedForm(true)}
-              className="w-full py-3.5 bg-white border-[1.5px] border-rally-border text-rally-text-sec font-semibold text-sm rounded-[14px] hover:border-rally-blue hover:text-rally-blue transition-all"
-            >
-              Interested, but not ready yet
-            </button>
-          </div>
+          <>
+            <div className="space-y-2.5 mb-5">
+              <button
+                onClick={() => setShowJoinForm(true)}
+                className="w-full py-4 bg-rally-blue text-white font-bold text-base rounded-[14px] hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 shadow-[0_4px_16px_rgba(37,99,235,0.25)]"
+              >
+                I'm in — Commit & Pay ${formatCurrency(trip.deposit_amount)}
+              </button>
+              <button
+                onClick={() => setShowInterestedForm(true)}
+                className="w-full py-3.5 bg-white border-[1.5px] border-rally-border text-rally-text-sec font-semibold text-sm rounded-[14px] hover:border-rally-blue hover:text-rally-blue transition-all"
+              >
+                Interested, but not ready yet
+              </button>
+            </div>
 
-          {/* Deposit Explanation */}
-          <div className="text-center">
-            <p className="text-xs text-rally-text-muted leading-relaxed max-w-[340px] mx-auto">
-              Your ${formatCurrency(trip.deposit_amount)} deposit goes toward the trip cost. If the trip happens, it's applied to your share. This is how we make sure everyone's actually in.
-            </p>
-          </div>
+            {/* Deposit Explanation */}
+            <div className="text-center">
+              <p className="text-xs text-rally-text-muted leading-relaxed max-w-[340px] mx-auto">
+                Your ${formatCurrency(trip.deposit_amount)} deposit goes toward the trip cost. If the trip happens, it's applied to your share. This is how we make sure everyone's actually in.
+              </p>
+            </div>
+          </>
         ) : showInterestedForm ? (
           /* Interested Email Capture Form */
           <>

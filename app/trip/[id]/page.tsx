@@ -48,6 +48,23 @@ export default function TripDetailPage() {
     }
   }, [tripId]);
 
+  // Auto-refresh trip data every 5 seconds for organizers when trip is open
+  useEffect(() => {
+    if (!trip || !userEmail) return;
+
+    const isOrganizer = userEmail === trip.organizer_email;
+    const isOpen = trip.status === 'open';
+
+    if (isOrganizer && isOpen) {
+      const interval = setInterval(() => {
+        // Silently refresh data without showing loading state
+        fetchTripDataSilent();
+      }, 5000);
+
+      return () => clearInterval(interval);
+    }
+  }, [trip, userEmail]);
+
   // Save trip to localStorage
   useEffect(() => {
     if (trip && userEmail) {
@@ -108,6 +125,33 @@ export default function TripDetailPage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchTripDataSilent() {
+    try {
+      const [tripRes, membersRes, prefsCountRes] = await Promise.all([
+        fetch(`/api/trips/${tripId}`),
+        fetch(`/api/trips/${tripId}/members`),
+        fetch(`/api/trips/${tripId}/preferences-count`)
+      ]);
+
+      if (!tripRes.ok || !membersRes.ok) {
+        return; // Silently fail
+      }
+
+      const tripData = await tripRes.json();
+      const membersData = await membersRes.json();
+
+      setTrip(tripData);
+      setMembers(membersData);
+
+      if (prefsCountRes.ok) {
+        const prefsCountData = await prefsCountRes.json();
+        setPreferencesCount(prefsCountData.count || 0);
+      }
+    } catch (err) {
+      console.error('Silent refresh failed:', err);
     }
   }
 

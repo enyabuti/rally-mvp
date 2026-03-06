@@ -41,6 +41,8 @@ export default function CreateTrip() {
 
       const data = await res.json();
       if (data.id) {
+        // Save organizer email to localStorage so they don't need to identify themselves
+        localStorage.setItem('rally_user_email', payload.organizer_email);
         router.push(`/trip/${data.id}`);
       } else {
         alert('Trip created but no ID returned');

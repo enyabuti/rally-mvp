@@ -63,7 +63,7 @@ export default function CreateTrip() {
         Set the basics. Your crew handles the rest.
       </p>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" autoComplete="off">
         {/* Trip Name */}
         <div>
           <label className="block text-sm font-semibold text-rally-text mb-1.5">Trip name</label>
@@ -176,7 +176,7 @@ export default function CreateTrip() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 bg-rally-blue text-white font-bold text-sm rounded-input hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+          className="w-full py-4 bg-rally-blue text-white font-bold text-sm rounded-input hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none mt-2"
         >
           {loading ? 'Creating...' : 'Create Trip & Get Share Link'}
         </button>

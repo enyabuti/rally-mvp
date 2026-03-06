@@ -210,7 +210,7 @@ export default function PreferencesPage() {
           <label className="block text-sm font-bold text-rally-text mb-2.5">
             Preferred pace
           </label>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             {[
               { val: 'packed' as Pace, desc: 'See everything' },
               { val: 'balanced' as Pace, desc: 'Mix of plans & free time' },
@@ -220,7 +220,7 @@ export default function PreferencesPage() {
                 key={item.val}
                 type="button"
                 onClick={() => setPace(item.val)}
-                className={`flex-1 py-2.5 px-2 border-2 rounded-input text-xs font-semibold capitalize transition-all text-center ${
+                className={`flex-1 py-3 px-4 border-2 rounded-input text-sm font-semibold capitalize transition-all text-center ${
                   pace === item.val
                     ? 'border-rally-blue bg-rally-blue-light text-rally-blue'
                     : 'border-rally-border bg-white text-rally-text-sec'

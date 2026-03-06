@@ -222,13 +222,13 @@ export default function VotePage() {
                   : 'border-rally-border bg-white hover:border-rally-blue/30'
               }`}
             >
-              <div className="p-5">
+              <div className="p-5 sm:p-6">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
-                    <h3 className="font-serif text-xl text-rally-black mb-1 font-normal">
+                    <h3 className="font-serif text-xl sm:text-2xl text-rally-black mb-1 font-normal">
                       {opt.option_name}
                     </h3>
-                    <p className="text-sm text-rally-text-sec leading-relaxed">
+                    <p className="text-sm sm:text-base text-rally-text-sec leading-relaxed">
                       {opt.description}
                     </p>
                   </div>
@@ -257,7 +257,7 @@ export default function VotePage() {
                 <button
                   onClick={() => handleVote(opt.id)}
                   disabled={!!myVote || submitting || !memberId}
-                  className={`w-full py-3 rounded-button text-sm font-bold transition-all ${
+                  className={`w-full py-4 min-h-[48px] rounded-button text-sm font-bold transition-all ${
                     isSelected
                       ? 'bg-rally-green text-white'
                       : myVote

@@ -89,7 +89,7 @@ export default function CreateTrip() {
         </div>
 
         {/* Dates */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-semibold text-rally-text mb-1.5">Start date</label>
             <input
@@ -111,7 +111,7 @@ export default function CreateTrip() {
         </div>
 
         {/* Budget + Deposit */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-semibold text-rally-text mb-1.5">Budget per person</label>
             <div className="relative">
@@ -148,7 +148,7 @@ export default function CreateTrip() {
         {/* Organizer Info */}
         <div className="border-t border-rally-border pt-5 mt-1">
           <p className="text-xs text-rally-text-muted mb-4 font-medium">Your info (as the organizer)</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-semibold text-rally-text mb-1.5">Your name</label>
               <input

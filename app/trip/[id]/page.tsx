@@ -297,7 +297,7 @@ export default function TripDetailPage() {
           </h1>
           <p className="text-lg text-rally-text-sec mb-6">{trip.destination}</p>
 
-          <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto mb-8">
             {[
               { label: 'Dates', value: `${formatDate(trip.start_date)} — ${formatDate(trip.end_date)}` },
               { label: 'Budget', value: `${formatCurrency(trip.budget_per_person)}/person` },
@@ -416,7 +416,7 @@ export default function TripDetailPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           {[
             { label: 'Dates', value: `${formatDate(trip.start_date)} — ${formatDate(trip.end_date)}` },
             { label: 'Budget', value: `${formatCurrency(trip.budget_per_person)}/person` },
@@ -433,7 +433,7 @@ export default function TripDetailPage() {
 
         {/* Share Link - Organizer Only */}
         {isOrganizer && (
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1 px-3.5 py-2.5 bg-white border border-rally-border rounded-input text-sm text-rally-text-muted overflow-hidden text-ellipsis whitespace-nowrap">
               {typeof window !== 'undefined' && `${window.location.origin}/trip/${tripId}`}
             </div>

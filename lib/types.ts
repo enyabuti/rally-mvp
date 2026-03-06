@@ -1,7 +1,7 @@
 // ─── Database Types ──────────────────────────
 
 export type TripStatus = 'open' | 'preferences' | 'voting' | 'locked' | 'cancelled';
-export type MemberStatus = 'pending' | 'committed' | 'withdrawn';
+export type MemberStatus = 'pending' | 'committed' | 'withdrawn' | 'interested';
 export type BudgetFlexibility = 'strict' | 'flexible' | 'whatever';
 export type AccommodationStyle = 'hostel' | 'airbnb' | 'hotel' | 'no_preference';
 export type Pace = 'packed' | 'balanced' | 'chill';

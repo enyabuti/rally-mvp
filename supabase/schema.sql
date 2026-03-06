@@ -53,8 +53,8 @@ create table members (
   paid boolean default false not null,
   paid_at timestamptz,
 
-  -- Status: 'pending' → 'committed' → 'withdrawn'
-  status text default 'pending' not null check (status in ('pending', 'committed', 'withdrawn')),
+  -- Status: 'pending' → 'committed' → 'withdrawn' → 'interested'
+  status text default 'pending' not null check (status in ('pending', 'committed', 'withdrawn', 'interested')),
 
   -- Unique: one entry per email per trip
   unique(trip_id, email)

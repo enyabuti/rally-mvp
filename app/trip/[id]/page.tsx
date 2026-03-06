@@ -27,6 +27,11 @@ export default function TripDetailPage() {
   const [memberName, setMemberName] = useState('');
   const [memberEmail, setMemberEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showJoinForm, setShowJoinForm] = useState(false);
+  const [showInterestedForm, setShowInterestedForm] = useState(false);
+  const [interestedEmail, setInterestedEmail] = useState('');
+  const [interestedSubmitting, setInterestedSubmitting] = useState(false);
+  const [interestedSuccess, setInterestedSuccess] = useState(false);
 
   // Timeout ref for share/copy
   const copiedTimeout = useRef<NodeJS.Timeout>();
@@ -199,6 +204,42 @@ export default function TripDetailPage() {
     }
   }
 
+  async function handleInterestedSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!interestedEmail.trim()) {
+      alert('Please enter your email');
+      return;
+    }
+
+    setInterestedSubmitting(true);
+    try {
+      const res = await fetch(`/api/trips/${tripId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: interestedEmail.split('@')[0], // Use email prefix as temporary name
+          email: interestedEmail,
+          status: 'interested',
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to save interest');
+      }
+
+      setInterestedSuccess(true);
+      setTimeout(() => {
+        setShowInterestedForm(false);
+        setInterestedSuccess(false);
+      }, 3000);
+    } catch (err: any) {
+      console.error('Interested error:', err);
+      alert(`Failed to save interest: ${err.message}`);
+      setInterestedSubmitting(false);
+    }
+  }
+
   async function handleStatusUpdate(newStatus: string) {
     try {
       const res = await fetch(`/api/trips/${tripId}`, {
@@ -288,57 +329,284 @@ export default function TripDetailPage() {
 
   // Join View (for non-members)
   if (!isMember && trip.status === 'open') {
-    return (
-      <div className="max-w-3xl mx-auto px-4 pb-12">
-        {/* Trip Invitation Card */}
-        <div className="bg-rally-offwhite border border-rally-border rounded-card p-8 mb-5 text-center">
-          <h1 className="font-serif text-4xl text-rally-black mb-3">
-            You're invited to {trip.name}
-          </h1>
-          <p className="text-lg text-rally-text-sec mb-6">{trip.destination}</p>
+    const committedMembers = members.filter(m => m.status === 'committed');
+    const organizer = members.find(m => m.email === trip.organizer_email);
+    const organizerName = organizer?.name || trip.organizer_email.split('@')[0];
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto mb-8">
-            {[
-              { label: 'Dates', value: `${formatDate(trip.start_date)} — ${formatDate(trip.end_date)}` },
-              { label: 'Budget', value: `${formatCurrency(trip.budget_per_person)}/person` },
-              { label: 'Deposit', value: formatCurrency(trip.deposit_amount) },
-            ].map((item, i) => (
-              <div key={i}>
-                <p className="text-xs text-rally-text-muted uppercase tracking-wider font-semibold mb-1">
-                  {item.label}
-                </p>
-                <p className="text-sm text-rally-text font-semibold">{item.value}</p>
-              </div>
-            ))}
+    // Payment Success View with Roadmap
+    if (paymentSuccess) {
+      return (
+        <div className="max-w-3xl mx-auto px-4 pb-12">
+          {/* Success Header */}
+          <div className="bg-rally-green-light border border-rally-green-border rounded-card p-8 mb-6 text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-rally-green mb-4 text-white text-4xl">
+              ✓
+            </div>
+            <h2 className="font-serif text-4xl text-rally-black mb-3">You're in!</h2>
+            <p className="text-rally-text-sec text-lg mb-2">
+              Your ${formatCurrency(trip.deposit_amount)} deposit has been received.
+            </p>
+            <p className="text-rally-text-sec">
+              Welcome to the crew for <strong>{trip.name}</strong>!
+            </p>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-rally-text-sec mb-2">
-            <span className="text-2xl">{committed}</span>
-            <span className="text-sm">crew member{committed !== 1 ? 's' : ''} committed</span>
+          {/* What Happens Next Roadmap */}
+          <div className="bg-white border border-rally-border rounded-card p-8 mb-6">
+            <h3 className="font-serif text-2xl text-rally-black mb-6">What happens next</h3>
+
+            <div className="space-y-6">
+              {[
+                {
+                  num: '1',
+                  title: 'Submit your preferences',
+                  desc: 'Tell us your travel style so we can build options that work for everyone',
+                  isCurrent: true,
+                },
+                {
+                  num: '2',
+                  title: 'AI builds your options',
+                  desc: 'Rally creates 3 complete trip options with flights, hotels, and daily activities',
+                  isCurrent: false,
+                },
+                {
+                  num: '3',
+                  title: 'Everyone votes',
+                  desc: 'Your crew picks their favorite. Majority wins.',
+                  isCurrent: false,
+                },
+                {
+                  num: '4',
+                  title: 'Trip gets locked',
+                  desc: 'Final itinerary is set. Time to pack your bags.',
+                  isCurrent: false,
+                },
+              ].map((step, i) => (
+                <div key={i} className="flex gap-4 items-start relative">
+                  {/* Timeline connector */}
+                  {i < 3 && (
+                    <div className="absolute left-[19px] top-[40px] bottom-[-24px] w-0.5 bg-rally-border" />
+                  )}
+
+                  {/* Step number badge */}
+                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm z-10 ${
+                    step.isCurrent
+                      ? 'bg-rally-blue text-white'
+                      : 'bg-rally-offwhite text-rally-text-muted border border-rally-border'
+                  }`}>
+                    {step.num}
+                  </div>
+
+                  {/* Step content */}
+                  <div className="flex-1 pt-1">
+                    <h4 className={`text-lg font-semibold mb-1 ${
+                      step.isCurrent ? 'text-rally-blue' : 'text-rally-text'
+                    }`}>
+                      {step.title}
+                    </h4>
+                    <p className="text-sm text-rally-text-sec leading-relaxed">
+                      {step.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA Button */}
+            <div className="mt-8 pt-6 border-t border-rally-border">
+              <button
+                onClick={() => router.push(`/trip/${tripId}/preferences`)}
+                className="w-full py-4 bg-rally-blue text-white font-bold text-lg rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg"
+              >
+                Submit Your Preferences →
+              </button>
+            </div>
+          </div>
+
+          {/* Share Invite Link Card */}
+          <div className="bg-rally-offwhite border border-rally-border rounded-card p-6">
+            <h4 className="font-semibold text-rally-black mb-2">Know someone else who should join?</h4>
+            <p className="text-sm text-rally-text-sec mb-4">
+              Share this link with friends to get more crew members committed
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={`${window.location.origin}/trip/${tripId}`}
+                readOnly
+                className="flex-1 px-4 py-2 border border-rally-border rounded-input text-sm text-rally-text-muted bg-white"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/trip/${tripId}`);
+                  alert('Link copied!');
+                }}
+                className="px-6 py-2 bg-rally-blue text-white font-semibold text-sm rounded-button hover:bg-rally-blue-dark transition-colors"
+              >
+                Copy
+              </button>
+            </div>
           </div>
         </div>
+      );
+    }
 
-        {/* Payment Success Message */}
-        {paymentSuccess ? (
-          <div className="bg-rally-green-light border border-rally-green-border rounded-card p-8 mb-5 text-center">
-            <div className="text-5xl mb-4">🎉</div>
-            <h3 className="font-serif text-3xl text-rally-black mb-3">You're committed!</h3>
-            <p className="text-rally-text-sec mb-6">
-              Your deposit has been received. You're now part of the crew for {trip.name}!
-            </p>
+    // Initial Invite View (before committing)
+    return (
+      <div className="max-w-3xl mx-auto px-4 pb-12">
+        {/* Invitation Header */}
+        <div className="mb-6">
+          <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 bg-rally-blue-light text-rally-blue text-sm font-semibold rounded-full">
+            <span>{organizerName} invited you</span>
+          </div>
+
+          <h1 className="font-serif text-5xl text-rally-black mb-4 tracking-tight leading-tight">
+            {trip.destination}
+          </h1>
+
+          <p className="text-lg text-rally-text-sec mb-6">
+            {formatDate(trip.start_date)} — {formatDate(trip.end_date)}
+          </p>
+
+          {/* Trip Details Card with Crew */}
+          <div className="bg-white border border-rally-border rounded-card p-6 mb-4">
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div>
+                <p className="text-xs text-rally-text-muted uppercase tracking-wide font-semibold mb-1">
+                  Budget per person
+                </p>
+                <p className="text-2xl font-bold text-rally-blue">
+                  ${formatCurrency(trip.budget_per_person)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-rally-text-muted uppercase tracking-wide font-semibold mb-1">
+                  Deposit to commit
+                </p>
+                <p className="text-2xl font-bold text-rally-blue">
+                  ${formatCurrency(trip.deposit_amount)}
+                </p>
+              </div>
+            </div>
+
+            {/* Crew Members */}
+            {committedMembers.length > 0 && (
+              <div className="border-t border-rally-border pt-4">
+                <p className="text-xs text-rally-text-muted uppercase tracking-wide font-semibold mb-3">
+                  Who's already in ({committedMembers.length} crew member{committedMembers.length !== 1 ? 's' : ''})
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {committedMembers.map((member, i) => (
+                    <div
+                      key={i}
+                      className="inline-flex items-center gap-2 px-3 py-2 bg-rally-offwhite rounded-full"
+                    >
+                      <div className="w-7 h-7 rounded-full bg-rally-blue text-white flex items-center justify-center text-xs font-bold">
+                        {member.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-sm font-medium text-rally-text pr-1">
+                        {member.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Deadline Notice */}
+          {trip.commitment_deadline && (
+            <div className="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">⏰</span>
+                <div>
+                  <p className="font-semibold text-amber-900 mb-1">Commitment deadline</p>
+                  <p className="text-sm text-amber-800">
+                    Join by <strong>{formatDate(trip.commitment_deadline)}</strong> to be part of this trip
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Two-Button Action Flow */}
+        {!showJoinForm && !showInterestedForm ? (
+          <div className="space-y-3">
             <button
-              onClick={() => router.push(`/trip/${tripId}/preferences`)}
-              className="px-8 py-4 bg-rally-blue text-white font-bold rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg"
+              onClick={() => setShowJoinForm(true)}
+              className="w-full py-5 bg-rally-blue text-white font-bold text-lg rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
-              Submit Your Travel Preferences
+              I'm in — Commit & Pay ${formatCurrency(trip.deposit_amount)}
             </button>
+            <button
+              onClick={() => setShowInterestedForm(true)}
+              className="w-full py-4 bg-white border-2 border-rally-border text-rally-text font-semibold text-base rounded-button hover:bg-rally-offwhite transition-all"
+            >
+              Interested, but not ready yet
+            </button>
+          </div>
+        ) : showInterestedForm ? (
+          /* Interested Email Capture Form */
+          <div className="bg-white border border-rally-border rounded-card p-8">
+            {interestedSuccess ? (
+              <div className="text-center">
+                <div className="text-5xl mb-4">👍</div>
+                <h3 className="font-serif text-2xl text-rally-black mb-3">Got it!</h3>
+                <p className="text-rally-text-sec">
+                  We'll send you updates about {trip.name} at <strong>{interestedEmail}</strong>
+                </p>
+              </div>
+            ) : (
+              <>
+                <h3 className="font-serif text-2xl text-rally-black mb-3">Stay in the loop</h3>
+                <p className="text-rally-text-sec mb-6">
+                  Not ready to commit yet? Drop your email and we'll keep you posted on this trip.
+                </p>
+
+                <form onSubmit={handleInterestedSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="interested-email" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wide mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      id="interested-email"
+                      value={interestedEmail}
+                      onChange={(e) => setInterestedEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full px-4 py-3 border border-rally-border rounded-input text-rally-text placeholder:text-rally-text-muted focus:outline-none focus:border-rally-blue"
+                      required
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowInterestedForm(false)}
+                      className="flex-1 py-3 border-2 border-rally-border text-rally-text font-semibold rounded-button hover:bg-rally-offwhite transition-all"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={interestedSubmitting}
+                      className="flex-1 py-3 bg-rally-blue text-white font-bold rounded-button hover:bg-rally-blue-dark transition-all disabled:opacity-50"
+                    >
+                      {interestedSubmitting ? 'Saving...' : 'Keep Me Posted'}
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         ) : (
           /* Join Trip Form */
           <div className="bg-white border border-rally-border rounded-card p-8">
-            <h2 className="font-serif text-2xl text-rally-black mb-3">Join This Trip</h2>
+            <h3 className="font-serif text-2xl text-rally-black mb-3">Commit to this trip</h3>
             <p className="text-rally-text-sec mb-6">
-              Commit to the trip by paying your {formatCurrency(trip.deposit_amount)} deposit. You'll help shape the itinerary!
+              Pay your ${formatCurrency(trip.deposit_amount)} deposit to join the crew and help shape the itinerary.
             </p>
 
             <form onSubmit={handleJoinTrip} className="space-y-4">
@@ -373,13 +641,22 @@ export default function TripDetailPage() {
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full py-4 bg-rally-blue text-white font-bold rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-              >
-                {submitting ? 'Processing...' : `Commit & Pay ${formatCurrency(trip.deposit_amount)}`}
-              </button>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowJoinForm(false)}
+                  className="flex-1 py-3 border-2 border-rally-border text-rally-text font-semibold rounded-button hover:bg-rally-offwhite transition-all"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 py-4 bg-rally-blue text-white font-bold rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                >
+                  {submitting ? 'Processing...' : `Pay ${formatCurrency(trip.deposit_amount)}`}
+                </button>
+              </div>
             </form>
           </div>
         )}

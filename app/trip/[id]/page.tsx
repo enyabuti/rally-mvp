@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Trip, Member } from '@/lib/types';
 import PhaseProgress from '@/app/components/PhaseProgress';
@@ -27,6 +27,9 @@ export default function TripDetailPage() {
   const [memberName, setMemberName] = useState('');
   const [memberEmail, setMemberEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Timeout ref for share/copy
+  const copiedTimeout = useRef<NodeJS.Timeout>();
 
   const paymentSuccess = searchParams.get('success') === 'true';
 
@@ -112,12 +115,43 @@ export default function TripDetailPage() {
     }
   }
 
-  function copyShareLink() {
+  async function handleShare() {
     const shareUrl = `${window.location.origin}/trip/${tripId}`;
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+
+    // Try native share API first (works on mobile)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: trip?.name || 'Rally Trip',
+          text: `Join our trip to ${trip?.destination}! Pay your deposit to commit.`,
+          url: shareUrl,
+        });
+        return;
+      } catch (err) {
+        // User cancelled or share failed, fall through to clipboard
+        if ((err as Error).name === 'AbortError') {
+          return; // User cancelled, don't show copied message
+        }
+      }
+    }
+
+    // Fallback to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      if (copiedTimeout.current) clearTimeout(copiedTimeout.current);
+      copiedTimeout.current = setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   }
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (copiedTimeout.current) clearTimeout(copiedTimeout.current);
+    };
+  }, []);
 
   function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -404,10 +438,10 @@ export default function TripDetailPage() {
               {typeof window !== 'undefined' && `${window.location.origin}/trip/${tripId}`}
             </div>
             <button
-              onClick={copyShareLink}
+              onClick={handleShare}
               className={`px-5 py-2.5 ${copied ? 'bg-rally-green' : 'bg-rally-black'} text-white rounded-input text-sm font-bold transition-all whitespace-nowrap hover:-translate-y-0.5`}
             >
-              {copied ? '✓ Copied' : 'Copy Link'}
+              {copied ? '✓ Copied' : '↗ Share'}
             </button>
           </div>
         )}

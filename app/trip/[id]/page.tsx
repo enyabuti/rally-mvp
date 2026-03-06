@@ -298,7 +298,8 @@ export default function TripDetailPage() {
   const committed = members.filter(m => m.status === 'committed').length;
   const prefsSubmitted = preferencesCount;
   const isOrganizer = userEmail === trip.organizer_email;
-  const isMember = members.some(m => m.email === userEmail);
+  // Only consider committed/pending members as actual members (exclude 'interested' status)
+  const isMember = members.some(m => m.email === userEmail && m.status !== 'interested');
   const userMember = members.find(m => m.email === userEmail);
 
   // Email Identification View

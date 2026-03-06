@@ -224,7 +224,7 @@ export default function TripDetailPage() {
   // Email Identification View
   if (!userEmail || identifyingEmail) {
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto px-4 pb-12">
         <div className="bg-white border border-rally-border rounded-card p-8 text-center">
           <h2 className="font-serif text-2xl text-rally-black mb-3">Identify Yourself</h2>
           <p className="text-rally-text-sec mb-6">
@@ -255,7 +255,7 @@ export default function TripDetailPage() {
   // Join View (for non-members)
   if (!isMember && trip.status === 'open') {
     return (
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto px-4 pb-12">
         {/* Trip Invitation Card */}
         <div className="bg-rally-offwhite border border-rally-border rounded-card p-8 mb-5 text-center">
           <h1 className="font-serif text-4xl text-rally-black mb-3">
@@ -355,7 +355,7 @@ export default function TripDetailPage() {
 
   // Member/Organizer View
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto px-4 pb-12">
       {/* Trip Header Card */}
       <div className="bg-rally-offwhite border border-rally-border rounded-card p-6 mb-5">
         <div className="flex justify-between items-start mb-4">

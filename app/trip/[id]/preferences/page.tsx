@@ -120,7 +120,7 @@ export default function PreferencesPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto px-4 pb-12">
       <button
         onClick={() => router.push(`/trip/${tripId}`)}
         className="mb-4 text-sm text-rally-blue font-semibold hover:underline"

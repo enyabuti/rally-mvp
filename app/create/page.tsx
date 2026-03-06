@@ -54,7 +54,8 @@ export default function CreateTrip() {
   }
 
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="max-w-2xl mx-auto px-4 pb-12">
+      <div className="max-w-lg mx-auto">
       <h1 className="font-serif text-4xl text-rally-black tracking-tight mb-2">
         Start a trip
       </h1>
@@ -180,6 +181,7 @@ export default function CreateTrip() {
           {loading ? 'Creating...' : 'Create Trip & Get Share Link'}
         </button>
       </form>
+      </div>
     </div>
   );
 }

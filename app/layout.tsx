@@ -19,7 +19,7 @@ export default function RootLayout({
             Rally<span className="text-rally-blue">.</span>
           </a>
         </nav>
-        <main className="pt-20 pb-12 px-4 max-w-2xl mx-auto">
+        <main className="pt-20 pb-0">
           {children}
         </main>
       </body>

@@ -118,7 +118,7 @@ export default function FinalItineraryPage() {
   const totalCost = winningOption.estimated_cost_per_person * committedMembers.length;
 
   return (
-    <div className="max-w-4xl mx-auto pb-12">
+    <div className="max-w-2xl mx-auto px-4 pb-12">
       {/* Header Section */}
       <div className="text-center mb-8">
         <button

@@ -336,116 +336,69 @@ export default function TripDetailPage() {
     // Payment Success View with Roadmap
     if (paymentSuccess) {
       return (
-        <div className="max-w-3xl mx-auto px-4 pb-12">
+        <div className="max-w-[440px] mx-auto px-5 pb-12">
           {/* Success Header */}
-          <div className="bg-rally-green-light border border-rally-green-border rounded-card p-8 mb-6 text-center">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-rally-green mb-4 text-white text-4xl">
+          <div className="text-center py-8 pb-5">
+            <div className="w-16 h-16 rounded-full bg-rally-green flex items-center justify-center mx-auto mb-5 text-white text-[28px]">
               ✓
             </div>
-            <h2 className="font-serif text-4xl text-rally-black mb-3">You're in!</h2>
-            <p className="text-rally-text-sec text-lg mb-2">
-              Your ${formatCurrency(trip.deposit_amount)} deposit has been received.
+
+            <h2 className="font-serif text-[30px] text-rally-black mb-2 tracking-tight">
+              You're in!
+            </h2>
+            <p className="text-[15px] text-rally-text-sec mb-1">
+              ${formatCurrency(trip.deposit_amount)} deposit confirmed for {trip.name}
             </p>
-            <p className="text-rally-text-sec">
-              Welcome to the crew for <strong>{trip.name}</strong>!
+            <p className="text-[13px] text-rally-text-muted mb-8">
+              {trip.destination} · {formatDate(trip.start_date)} — {formatDate(trip.end_date)}
             </p>
           </div>
 
           {/* What Happens Next Roadmap */}
-          <div className="bg-white border border-rally-border rounded-card p-8 mb-6">
-            <h3 className="font-serif text-2xl text-rally-black mb-6">What happens next</h3>
+          <div className="bg-rally-offwhite border border-rally-border rounded-2xl p-5 mb-5">
+            <p className="text-xs text-rally-text-muted font-bold uppercase tracking-wider mb-3.5">What happens next</p>
 
-            <div className="space-y-6">
-              {[
-                {
-                  num: '1',
-                  title: 'Submit your preferences',
-                  desc: 'Tell us your travel style so we can build options that work for everyone',
-                  isCurrent: true,
-                },
-                {
-                  num: '2',
-                  title: 'AI builds your options',
-                  desc: 'Rally creates 3 complete trip options with flights, hotels, and daily activities',
-                  isCurrent: false,
-                },
-                {
-                  num: '3',
-                  title: 'Everyone votes',
-                  desc: 'Your crew picks their favorite. Majority wins.',
-                  isCurrent: false,
-                },
-                {
-                  num: '4',
-                  title: 'Trip gets locked',
-                  desc: 'Final itinerary is set. Time to pack your bags.',
-                  isCurrent: false,
-                },
-              ].map((step, i) => (
-                <div key={i} className="flex gap-4 items-start relative">
-                  {/* Timeline connector */}
-                  {i < 3 && (
-                    <div className="absolute left-[19px] top-[40px] bottom-[-24px] w-0.5 bg-rally-border" />
-                  )}
-
-                  {/* Step number badge */}
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm z-10 ${
-                    step.isCurrent
-                      ? 'bg-rally-blue text-white'
-                      : 'bg-rally-offwhite text-rally-text-muted border border-rally-border'
-                  }`}>
-                    {step.num}
-                  </div>
-
-                  {/* Step content */}
-                  <div className="flex-1 pt-1">
-                    <h4 className={`text-lg font-semibold mb-1 ${
-                      step.isCurrent ? 'text-rally-blue' : 'text-rally-text'
-                    }`}>
-                      {step.title}
-                    </h4>
-                    <p className="text-sm text-rally-text-sec leading-relaxed">
-                      {step.desc}
-                    </p>
-                  </div>
+            {[
+              { num: '1', text: 'Submit your travel preferences (2 min)', active: true },
+              { num: '2', text: 'AI builds itinerary options for the group', active: false },
+              { num: '3', text: 'Everyone votes — majority wins', active: false },
+              { num: '4', text: 'Trip is locked. Pack your bags.', active: false },
+            ].map((step, i) => (
+              <div key={i} className="flex items-center gap-3 py-2" style={{ opacity: step.active ? 1 : 0.5 }}>
+                <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${
+                  step.active ? 'bg-rally-blue text-white' : 'bg-rally-border text-rally-text-muted'
+                }`}>
+                  {step.num}
                 </div>
-              ))}
-            </div>
-
-            {/* CTA Button */}
-            <div className="mt-8 pt-6 border-t border-rally-border">
-              <button
-                onClick={() => router.push(`/trip/${tripId}/preferences`)}
-                className="w-full py-4 bg-rally-blue text-white font-bold text-lg rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg"
-              >
-                Submit Your Preferences →
-              </button>
-            </div>
+                <p className={`text-[13px] ${step.active ? 'text-rally-text font-semibold' : 'text-rally-text-muted font-normal'}`}>
+                  {step.text}
+                  {step.active && <span className="text-rally-blue"> ← You're here</span>}
+                </p>
+              </div>
+            ))}
           </div>
 
-          {/* Share Invite Link Card */}
-          <div className="bg-rally-offwhite border border-rally-border rounded-card p-6">
-            <h4 className="font-semibold text-rally-black mb-2">Know someone else who should join?</h4>
-            <p className="text-sm text-rally-text-sec mb-4">
-              Share this link with friends to get more crew members committed
+          <button
+            onClick={() => router.push(`/trip/${tripId}/preferences`)}
+            className="w-full py-4 bg-rally-blue text-white font-bold text-base rounded-[14px] hover:bg-rally-blue-dark transition-all shadow-[0_4px_16px_rgba(37,99,235,0.25)] mb-4"
+          >
+            Submit Your Preferences
+          </button>
+
+          {/* Share with more friends */}
+          <div className="bg-rally-blue-light border border-rally-blue/10 rounded-xl p-3.5 text-center">
+            <p className="text-[13px] text-rally-blue font-semibold mb-2">
+              Know someone who'd want to come?
             </p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={`${window.location.origin}/trip/${tripId}`}
-                readOnly
-                className="flex-1 px-4 py-2 border border-rally-border rounded-input text-sm text-rally-text-muted bg-white"
-              />
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/trip/${tripId}`);
-                  alert('Link copied!');
-                }}
-                className="px-6 py-2 bg-rally-blue text-white font-semibold text-sm rounded-button hover:bg-rally-blue-dark transition-colors"
-              >
-                Copy
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/trip/${tripId}`);
+                alert('Link copied!');
+              }}
+              className="px-5 py-2 bg-white text-rally-blue border-[1.5px] border-rally-blue/20 rounded-full text-[13px] font-semibold hover:bg-rally-blue hover:text-white transition-all"
+            >
+              Share Invite Link
+            </button>
           </div>
         </div>
       );
@@ -453,37 +406,37 @@ export default function TripDetailPage() {
 
     // Initial Invite View (before committing)
     return (
-      <div className="max-w-3xl mx-auto px-4 pb-12">
+      <div className="max-w-[440px] mx-auto px-5 pb-12">
         {/* Invitation Header */}
-        <div className="mb-6">
-          <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 bg-rally-blue-light text-rally-blue text-sm font-semibold rounded-full">
+        <div className="text-center mb-7">
+          <div className="inline-flex items-center gap-2 mb-5 px-4 py-2 bg-rally-blue-light border border-rally-blue/10 text-rally-blue text-[13px] font-semibold rounded-full">
             <span>{organizerName} invited you</span>
           </div>
 
-          <h1 className="font-serif text-5xl text-rally-black mb-4 tracking-tight leading-tight">
+          <h1 className="font-serif text-[36px] text-rally-black mb-1.5 tracking-tight leading-[1.1]">
             {trip.destination}
           </h1>
 
-          <p className="text-lg text-rally-text-sec mb-6">
+          <p className="text-[15px] text-rally-text-sec">
             {formatDate(trip.start_date)} — {formatDate(trip.end_date)}
           </p>
 
           {/* Trip Details Card with Crew */}
-          <div className="bg-white border border-rally-border rounded-card p-6 mb-4">
-            <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="bg-rally-offwhite border border-rally-border rounded-2xl p-5 mb-4">
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <p className="text-xs text-rally-text-muted uppercase tracking-wide font-semibold mb-1">
-                  Budget per person
+                <p className="text-[11px] text-rally-text-muted uppercase tracking-wider font-semibold mb-0.5">
+                  Budget
                 </p>
-                <p className="text-2xl font-bold text-rally-blue">
-                  ${formatCurrency(trip.budget_per_person)}
+                <p className="text-base text-rally-text font-bold">
+                  ${formatCurrency(trip.budget_per_person)}<span className="text-xs font-normal text-rally-text-muted">/person</span>
                 </p>
               </div>
               <div>
-                <p className="text-xs text-rally-text-muted uppercase tracking-wide font-semibold mb-1">
+                <p className="text-[11px] text-rally-text-muted uppercase tracking-wider font-semibold mb-0.5">
                   Deposit to commit
                 </p>
-                <p className="text-2xl font-bold text-rally-blue">
+                <p className="text-base text-rally-blue font-bold">
                   ${formatCurrency(trip.deposit_amount)}
                 </p>
               </div>
@@ -491,22 +444,25 @@ export default function TripDetailPage() {
 
             {/* Crew Members */}
             {committedMembers.length > 0 && (
-              <div className="border-t border-rally-border pt-4">
-                <p className="text-xs text-rally-text-muted uppercase tracking-wide font-semibold mb-3">
-                  Who's already in ({committedMembers.length} crew member{committedMembers.length !== 1 ? 's' : ''})
+              <div>
+                <p className="text-[11px] text-rally-text-muted uppercase tracking-wider font-semibold mb-2.5">
+                  {committedMembers.length} people committed
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {committedMembers.map((member, i) => (
                     <div
                       key={i}
-                      className="inline-flex items-center gap-2 px-3 py-2 bg-rally-offwhite rounded-full"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rally-border rounded-full"
                     >
-                      <div className="w-7 h-7 rounded-full bg-rally-blue text-white flex items-center justify-center text-xs font-bold">
+                      <div className="w-6 h-6 rounded-full bg-rally-blue text-white flex items-center justify-center text-[11px] font-bold">
                         {member.name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-sm font-medium text-rally-text pr-1">
+                      <span className="text-[13px] font-medium text-rally-text">
                         {member.name}
                       </span>
+                      {member.email === trip.organizer_email && (
+                        <span className="text-[9px] text-rally-blue font-bold uppercase tracking-wider ml-0.5">Host</span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -516,118 +472,140 @@ export default function TripDetailPage() {
 
           {/* Deadline Notice */}
           {trip.commitment_deadline && (
-            <div className="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4 mb-6">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">⏰</span>
-                <div>
-                  <p className="font-semibold text-amber-900 mb-1">Commitment deadline</p>
-                  <p className="text-sm text-amber-800">
-                    Join by <strong>{formatDate(trip.commitment_deadline)}</strong> to be part of this trip
-                  </p>
-                </div>
-              </div>
+            <div className="bg-amber-50 border border-amber-500/15 rounded-xl px-4 py-3 mb-5">
+              <p className="text-[13px] text-amber-700 font-semibold">
+                Commit by {formatDate(trip.commitment_deadline)} to join this trip
+              </p>
             </div>
           )}
         </div>
 
         {/* Two-Button Action Flow */}
         {!showJoinForm && !showInterestedForm ? (
-          <div className="space-y-3">
+          <div className="space-y-2.5 mb-5">
             <button
               onClick={() => setShowJoinForm(true)}
-              className="w-full py-5 bg-rally-blue text-white font-bold text-lg rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg"
+              className="w-full py-4 bg-rally-blue text-white font-bold text-base rounded-[14px] hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 shadow-[0_4px_16px_rgba(37,99,235,0.25)]"
             >
               I'm in — Commit & Pay ${formatCurrency(trip.deposit_amount)}
             </button>
             <button
               onClick={() => setShowInterestedForm(true)}
-              className="w-full py-4 bg-white border-2 border-rally-border text-rally-text font-semibold text-base rounded-button hover:bg-rally-offwhite transition-all"
+              className="w-full py-3.5 bg-white border-[1.5px] border-rally-border text-rally-text-sec font-semibold text-sm rounded-[14px] hover:border-rally-blue hover:text-rally-blue transition-all"
             >
               Interested, but not ready yet
             </button>
           </div>
+
+          {/* Deposit Explanation */}
+          <div className="text-center">
+            <p className="text-xs text-rally-text-muted leading-relaxed max-w-[340px] mx-auto">
+              Your ${formatCurrency(trip.deposit_amount)} deposit goes toward the trip cost. If the trip happens, it's applied to your share. This is how we make sure everyone's actually in.
+            </p>
+          </div>
         ) : showInterestedForm ? (
           /* Interested Email Capture Form */
-          <div className="bg-white border border-rally-border rounded-card p-8">
+          <>
+            <button
+              onClick={() => setShowInterestedForm(false)}
+              className="mb-5 text-sm text-rally-blue font-semibold hover:underline"
+            >
+              ← Back
+            </button>
+
+            <div className="text-center py-5 pb-8">
+              <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4 text-2xl">
+                💭
+              </div>
+              <h2 className="font-serif text-[26px] text-rally-black mb-2 tracking-tight">No pressure</h2>
+              <p className="text-[15px] text-rally-text-sec leading-relaxed max-w-[380px] mx-auto mb-6">
+                We'll let {organizerName} know you're considering it. You can come back and commit anytime before the deadline.
+              </p>
+            </div>
+
             {interestedSuccess ? (
-              <div className="text-center">
-                <div className="text-5xl mb-4">👍</div>
-                <h3 className="font-serif text-2xl text-rally-black mb-3">Got it!</h3>
-                <p className="text-rally-text-sec">
-                  We'll send you updates about {trip.name} at <strong>{interestedEmail}</strong>
+              <div className="text-center py-10">
+                <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4 text-2xl text-amber-600 font-bold">
+                  ✓
+                </div>
+                <h3 className="font-serif text-[26px] text-rally-black mb-2">You're on the radar</h3>
+                <p className="text-[15px] text-rally-text-sec mb-2">
+                  {organizerName} can see you're considering it.
+                </p>
+                <p className="text-[13px] text-rally-text-muted">
+                  We'll remind you before {trip.commitment_deadline && formatDate(trip.commitment_deadline)}.
                 </p>
               </div>
             ) : (
-              <>
-                <h3 className="font-serif text-2xl text-rally-black mb-3">Stay in the loop</h3>
-                <p className="text-rally-text-sec mb-6">
-                  Not ready to commit yet? Drop your email and we'll keep you posted on this trip.
-                </p>
+              <form onSubmit={handleInterestedSubmit} className="space-y-5">
+                <div>
+                  <label htmlFor="interested-email" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wider mb-1.5">
+                    Your email (so we can remind you)
+                  </label>
+                  <input
+                    type="email"
+                    id="interested-email"
+                    value={interestedEmail}
+                    onChange={(e) => setInterestedEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full px-4 py-3 border-[1.5px] border-rally-border rounded-xl text-sm focus:outline-none focus:border-rally-blue"
+                    required
+                    autoFocus
+                  />
+                </div>
 
-                <form onSubmit={handleInterestedSubmit} className="space-y-4">
-                  <div>
-                    <label htmlFor="interested-email" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wide mb-2">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      id="interested-email"
-                      value={interestedEmail}
-                      onChange={(e) => setInterestedEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="w-full px-4 py-3 border border-rally-border rounded-input text-rally-text placeholder:text-rally-text-muted focus:outline-none focus:border-rally-blue"
-                      required
-                      autoFocus
-                    />
-                  </div>
+                <button
+                  type="submit"
+                  disabled={interestedSubmitting}
+                  className="w-full py-3.5 bg-amber-600 text-white font-bold text-[15px] rounded-[14px] hover:bg-amber-700 transition-all disabled:opacity-50"
+                >
+                  {interestedSubmitting ? 'Saving...' : 'Mark Me as Interested'}
+                </button>
 
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowInterestedForm(false)}
-                      className="flex-1 py-3 border-2 border-rally-border text-rally-text font-semibold rounded-button hover:bg-rally-offwhite transition-all"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={interestedSubmitting}
-                      className="flex-1 py-3 bg-rally-blue text-white font-bold rounded-button hover:bg-rally-blue-dark transition-all disabled:opacity-50"
-                    >
-                      {interestedSubmitting ? 'Saving...' : 'Keep Me Posted'}
-                    </button>
-                  </div>
-                </form>
-              </>
+                <div className="bg-rally-offwhite rounded-xl p-3.5">
+                  <p className="text-xs text-rally-text-muted leading-relaxed">
+                    You'll get one reminder 48 hours before the deadline. That's it — no spam.
+                  </p>
+                </div>
+              </form>
             )}
-          </div>
+          </>
         ) : (
           /* Join Trip Form */
-          <div className="bg-white border border-rally-border rounded-card p-8">
-            <h3 className="font-serif text-2xl text-rally-black mb-3">Commit to this trip</h3>
-            <p className="text-rally-text-sec mb-6">
-              Pay your ${formatCurrency(trip.deposit_amount)} deposit to join the crew and help shape the itinerary.
+          <>
+            <button
+              onClick={() => setShowJoinForm(false)}
+              className="mb-5 text-sm text-rally-blue font-semibold hover:underline"
+            >
+              ← Back
+            </button>
+
+            <h2 className="font-serif text-[26px] text-rally-black mb-1.5 tracking-tight">
+              Lock in your spot
+            </h2>
+            <p className="text-sm text-rally-text-sec mb-6">
+              Pay your ${formatCurrency(trip.deposit_amount)} deposit to join {trip.name}. You'll shape the itinerary next.
             </p>
 
-            <form onSubmit={handleJoinTrip} className="space-y-4">
+            <form onSubmit={handleJoinTrip} className="space-y-3.5 mb-5">
               <div>
-                <label htmlFor="name" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wide mb-2">
-                  Your Name
+                <label htmlFor="name" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wider mb-1.5">
+                  Your name
                 </label>
                 <input
                   type="text"
                   id="name"
                   value={memberName}
                   onChange={(e) => setMemberName(e.target.value)}
-                  placeholder="Enter your name"
-                  className="w-full px-4 py-3 border border-rally-border rounded-input text-rally-text placeholder:text-rally-text-muted focus:outline-none focus:border-rally-blue"
+                  placeholder="Your name"
+                  className="w-full px-4 py-3 border-[1.5px] border-rally-border rounded-xl text-sm focus:outline-none focus:border-rally-blue"
                   required
                 />
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wide mb-2">
-                  Email Address
+                <label htmlFor="email" className="block text-xs text-rally-text-muted font-semibold uppercase tracking-wider mb-1.5">
+                  Email address
                 </label>
                 <input
                   type="email"
@@ -636,29 +614,43 @@ export default function TripDetailPage() {
                   onChange={(e) => setMemberEmail(e.target.value)}
                   defaultValue={userEmail}
                   placeholder="you@example.com"
-                  className="w-full px-4 py-3 border border-rally-border rounded-input text-rally-text placeholder:text-rally-text-muted focus:outline-none focus:border-rally-blue"
+                  className="w-full px-4 py-3 border-[1.5px] border-rally-border rounded-xl text-sm focus:outline-none focus:border-rally-blue"
                   required
                 />
               </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowJoinForm(false)}
-                  className="flex-1 py-3 border-2 border-rally-border text-rally-text font-semibold rounded-button hover:bg-rally-offwhite transition-all"
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 py-4 bg-rally-blue text-white font-bold rounded-button hover:bg-rally-blue-dark transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-                >
-                  {submitting ? 'Processing...' : `Pay ${formatCurrency(trip.deposit_amount)}`}
-                </button>
-              </div>
             </form>
-          </div>
+
+            {/* Deposit breakdown */}
+            <div className="bg-rally-offwhite border border-rally-border rounded-[14px] p-4 mb-5">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-rally-text-sec">Trip deposit</span>
+                <span className="text-sm text-rally-text font-semibold">${formatCurrency(trip.deposit_amount)}.00</span>
+              </div>
+              <div className="h-px bg-rally-border my-2" />
+              <div className="flex justify-between">
+                <span className="text-sm text-rally-text font-bold">Total due now</span>
+                <span className="text-base text-rally-blue font-bold">${formatCurrency(trip.deposit_amount)}.00</span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleJoinTrip}
+              disabled={submitting || !memberName.trim() || !memberEmail.trim()}
+              className="w-full py-4 bg-rally-blue text-white font-bold text-base rounded-[14px] hover:bg-rally-blue-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_16px_rgba(37,99,235,0.25)]"
+            >
+              {submitting ? 'Redirecting to Stripe...' : `Pay $${formatCurrency(trip.deposit_amount)} & Join`}
+            </button>
+
+            <div className="flex items-center justify-center gap-2 mt-3.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-rally-text-muted">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+              <p className="text-[11px] text-rally-text-muted">
+                Secured by Stripe. Your deposit is applied toward the trip cost.
+              </p>
+            </div>
+          </>
         )}
       </div>
     );
